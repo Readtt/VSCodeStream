@@ -2,7 +2,7 @@
 	"name": "vscodestream",
 	"displayName": "VSCodeStream",
 	"description": "Streams VSCode data live to a websocket, can also make requests to the users client.",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "Readtt",
 	"repository": "https://github.com/Readtt/VSCodeStream",
 	"engines": {

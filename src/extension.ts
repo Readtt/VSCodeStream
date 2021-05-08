@@ -4,6 +4,7 @@ import * as http from 'http';
 import * as WebSocket from 'ws';
 import * as fs from 'fs';
 import * as logger from './logger';
+import { JSONStruct } from './JSONStruct';
 let server: http.Server;
 let status: vscode.StatusBarItem;
 let serverRunning: boolean;
@@ -61,94 +62,14 @@ function startServer() {
 		logger.Info("VSCodeStream - New connection: " + wss.clients.size);
 		const wsSend = function() {
 			ms = getMSUpdate();
-			ws.send(JSON.stringify({
-				appName: vscode.env.appName,
-				appRoot: vscode.env.appRoot,
-				version: vscode.version,
-				connections: wss.clients.size,
-				sendInterval: getMSUpdate(),
-				language: vscode.env.language,
-				workspace: {
-					workspaceName: vscode.workspace.name,
-					workspaceFolders: vscode.workspace.workspaceFolders
-				},
-				textEditor: {
-					allVisibleTextEditors: allVisibleTextEditors(),
-					activeTextEditor: activeTextEditor()
-				},
-				terminal: {
-					activeTerminal: vscode.window.activeTerminal?.name,
-					activeTerminalProcessID: vscode.window.activeTerminal?.processId,
-					terminals: vscode.window.terminals.length
-				},
-				debug: {
-					breakpoints: vscode.debug.breakpoints
-				},
-				tasks: {
-					taskExecutions: vscode.tasks.taskExecutions.map((task) => {
-						return {
-							task: task.task
-						};
-					})
-				},
-				window: {
-					state: vscode.window.state
-				},
-				extensions: vscode.extensions.all.map((extension) => {
-					return {
-						extensionPath: extension.extensionPath,
-						id: extension.id,
-						isActive: extension.isActive
-					};
-				})
-			}));
+			ws.send(JSON.stringify(new JSONStruct(vscode, wss, getMSUpdate(), allVisibleTextEditors(), activeTextEditor()).JSON()));
 			setTimeout(wsSend, ms);
 		};
 		setTimeout(wsSend, ms);
 	});
 	
 	app.get('/json', (req, res) => {
-		res.json({
-			appName: vscode.env.appName,
-			appRoot: vscode.env.appRoot,
-			version: vscode.version,
-			connections: wss.clients.size,
-			sendInterval: getMSUpdate(),
-			language: vscode.env.language,
-			workspace: {
-				workspaceName: vscode.workspace.name,
-				workspaceFolders: vscode.workspace.workspaceFolders
-			},
-			textEditor: {
-				allVisibleTextEditors: allVisibleTextEditors(),
-				activeTextEditor: activeTextEditor()
-			},
-			terminal: {
-				activeTerminal: vscode.window.activeTerminal?.name,
-				activeTerminalProcessID: vscode.window.activeTerminal?.processId,
-				terminals: vscode.window.terminals.length
-			},
-			debug: {
-				breakpoints: vscode.debug.breakpoints
-			},
-			tasks: {
-				taskExecutions: vscode.tasks.taskExecutions.map((task) => {
-					return {
-						task: task.task
-					};
-				})
-			},
-			window: {
-				state: vscode.window.state
-			},
-			extensions: vscode.extensions.all.map((extension) => {
-				return {
-					extensionPath: extension.extensionPath,
-					id: extension.id,
-					isActive: extension.isActive
-				};
-			})
-		});
+		res.json(new JSONStruct(vscode, wss, getMSUpdate(), allVisibleTextEditors(), activeTextEditor()).JSON());
 	});
 
 	server.listen(port, () => {
@@ -354,30 +275,16 @@ function allVisibleTextEditors() {
 				insertSpaces: textEditor.options.insertSpaces,
 				lineNumbers: textEditor.options.lineNumbers,
 				tabSize: textEditor.options.tabSize,
-				selections: textEditor.selections.map((selection, index) => {
-					if(index == 0) {
-						return {
-							primary: true,
-							active: selection.active,
-							anchor: selection.anchor,
-							end: selection.end,
-							isEmpty: selection.isEmpty,
-							isReversed: selection.isReversed,
-							isSingleLine: selection.isSingleLine,
-							start: selection.start
-						};
-					} else {
-						return {
-							primary: false,
-							active: selection.active,
-							anchor: selection.anchor,
-							end: selection.end,
-							isEmpty: selection.isEmpty,
-							isReversed: selection.isReversed,
-							isSingleLine: selection.isSingleLine,
-							start: selection.start
-						};
-					}
+				selections: textEditor.selections.map((selection) => {
+					return {
+						active: selection.active,
+						anchor: selection.anchor,
+						end: selection.end,
+						isEmpty: selection.isEmpty,
+						isReversed: selection.isReversed,
+						isSingleLine: selection.isSingleLine,
+						start: selection.start
+					};
 				}),
 				isClosed: textEditor.document.isClosed,
 				isSaved: textEditor.document.isUntitled,

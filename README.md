@@ -11,7 +11,7 @@ VSCodeStream is a VSCode extension for streaming VSCode data live to a websocket
 
 ## Structure
 
-```json
+```js
 {
 	appName: String,
 	appRoot: String,
@@ -58,3 +58,7 @@ window.saveAll
 configuration.port: Number,
 configuration.msUpdate: Number,
 ```
+
+## Routes
+
+- `/json`
